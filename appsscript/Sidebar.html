@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Google+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --sidebar-bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --border-color: #dadce0;
+      --primary-color: #0b57d0;
+      --primary-hover: #0842a0;
+      --primary-light: #e3f2fd;
+      --text-main: #1f1f1f;
+      --text-muted: #5f6368;
+      --success-bg: #e6f4ea;
+      --success-text: #137333;
+      --danger-bg: #fce8e6;
+      --danger-text: #c5221f;
+      --warning-bg: #fef7e0;
+      --warning-text: #b06000;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Roboto', 'Google Sans', sans-serif;
+    }
+
+    .sidebar-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 0;
+    }
+
+    /* Header */
+    .sidebar-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .header-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-logo-text {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .doc-info-bar {
+      display: none !important;
+    }
+
+    /* Google Workspace Style Pill Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      width: fit-content;
+      margin-top: 6px;
+      border: 1px solid transparent;
+    }
+    .badge-idle { background-color: #f1f3f4; color: var(--text-muted); border-color: #e0e0e0; }
+    .badge-running { background-color: #e8f0fe; color: var(--primary-color); border-color: #d2e3fc; }
+    .badge-waiting_approval { background-color: var(--warning-bg); color: var(--warning-text); border-color: #fde293; }
+    .badge-success { background-color: var(--success-bg); color: var(--success-text); border-color: #c6ecd0; }
+    .badge-failed { background-color: var(--danger-bg); color: var(--danger-text); border-color: #fad2cf; }
+
+    /* Offline Banner */
+    .offline-card {
+      background: var(--danger-bg);
+      border: 1px solid #fad2cf;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      color: var(--danger-text);
+    }
+
+    /* Chat Container */
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 12px;
+      min-height: 100px;
+    }
+
+    .chat-bubble {
+      max-width: 85%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      box-shadow: 0 1px 2px rgba(60,64,67,0.15);
+    }
+    .chat-bubble p {
+      margin: 0 0 6px 0;
+    }
+    .chat-bubble p:last-child {
+      margin-bottom: 0;
+    }
+    .chat-bubble ul, .chat-bubble ol {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .chat-bubble li {
+      margin-bottom: 4px;
+    }
+    .chat-bubble code {
+      background: #f1f3f4;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    .chat-bubble pre {
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 6px;
+      overflow-x: auto;
+      margin: 6px 0;
+    }
+    .chat-bubble pre code {
+      background: transparent;
+      padding: 0;
+    }
+
+    .chat-bubble-user {
+      align-self: flex-end;
+      background-color: var(--primary-light);
+      color: #041e49;
+      border: 1px solid #d3e3fd;
+      border-bottom-right-radius: 0;
+    }
+
+    .chat-bubble-agent {
+      align-self: flex-start;
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-bottom-left-radius: 0;
+    }
+
+    .system-msg {
+      align-self: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: #f1f3f4;
+      padding: 4px 10px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 90%;
+      border: 1px solid #e0e0e0;
+    }
+
+    /* Collapsible Thoughts Block - Google Style Detail Box */
+    .thought-details {
+      align-self: flex-start;
+      width: 85%;
+      margin-bottom: 2px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: #f8f9fa;
+      padding: 6px 10px;
+    }
+    
+    .thought-details summary {
+      font-size: 11px;
+      color: var(--primary-color);
+      cursor: pointer;
+      user-select: none;
+      font-weight: 500;
+      outline: none;
+    }
+    
+    .thought-content {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      font-family: 'JetBrains Mono', monospace;
+      background: #ffffff;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #e8eaed;
+    }
+
+    /* Google Doc Review / Diff view */
+    .diff-bubble {
+      align-self: flex-start;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      width: 92%;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 1px 3px rgba(60,64,67,0.15);
+    }
+
+    .diff-title {
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 500;
+      color: var(--warning-text);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .diff-container {
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      overflow-x: auto;
+      max-height: 160px;
+      overflow-y: auto;
+      color: #3c4043;
+    }
+
+    .diff-line {
+      white-space: pre-wrap;
+      display: block;
+      padding: 1px 4px;
+    }
+    .diff-add { color: var(--success-text); background: var(--success-bg); }
+    .diff-del { color: var(--danger-text); background: var(--danger-bg); }
+    .diff-info { color: #1a73e8; }
+
+    /* Inputs & Panels */
+    .input-panel {
+      flex-shrink: 0;
+      background: #ffffff;
+      border-top: 1px solid var(--border-color);
+      padding: 12px 16px 16px 16px;
+    }
+
+    /* Outlined Textarea matching Google forms */
+    .text-input-field {
+      width: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+      resize: none;
+      color: var(--text-main);
+    }
+    .text-input-field:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 1px var(--primary-color);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-family: 'Google Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background-color 0.15s;
+      height: 32px;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: #ffffff;
+      border-color: var(--border-color);
+      color: var(--primary-color);
+    }
+    .btn-secondary:hover {
+      background-color: #f8f9fa;
+      border-color: #c3c3c3;
+    }
+
+    .btn-danger {
+      background-color: #ffffff;
+      border-color: #fad2cf;
+      color: var(--danger-text);
+    }
+    .btn-danger:hover {
+      background-color: var(--danger-bg);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="sidebar-container">
+
+  <!-- Connection Status or Error Info -->
+  <div id="connection-error" class="offline-card hidden">
+    <div style="font-weight: 500; margin-bottom: 4px; font-size: 13px;">Backend Offline</div>
+    <div style="font-size: 11px; opacity: 0.9;">Make sure your Python server is running locally on port 8123:</div>
+    <code style="display:block; background:rgba(0,0,0,0.05); padding:6px; margin-top:6px; border-radius:4px; font-size:10px; font-family:'JetBrains Mono',monospace; border:1px solid rgba(0,0,0,0.1); color:#333;">python3 -m uvicorn src.server:app --reload --port 8123</code>
+  </div>
+
+  <!-- Doc Info Header -->
+  <div id="current-doc-info" class="doc-info-bar hidden">
+    <span>Active Document:</span>
+    <span id="status-doc-id" style="font-family:'JetBrains Mono', monospace; font-weight: 500; color:var(--text-main);"></span>
+  </div>
+
+  <!-- Chat History Area -->
+  <div id="chat-container">
+    <div class="system-msg">Initialize connection to start editing...</div>
+  </div>
+
+  <!-- Input and Controls Panel -->
+  <div class="input-panel">
+    
+    <!-- Inline Edit Panel -->
+    <div id="edit-panel" class="hidden" style="margin-bottom: 8px; border-top: 1px solid var(--border-color); padding-top: 8px;">
+      <div style="font-size: 11px; margin-bottom: 4px; font-weight: 500; color: var(--primary-color);">Edit proposed text manually:</div>
+      <textarea id="edit-textarea" class="text-input-field" style="height: 90px; font-family: 'JetBrains Mono', monospace; font-size: 12px;"></textarea>
+      <div style="display: flex; gap: 6px; margin-top: 6px;">
+        <button class="btn btn-primary" onclick="submitEdit()" style="padding: 4px 10px; font-size: 11px; height: 26px;">Submit Edit</button>
+        <button class="btn btn-secondary" onclick="hideEditPanel()" style="padding: 4px 10px; font-size: 11px; height: 26px;">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Active controls when approval is pending -->
+    <div id="approval-controls" class="hidden" style="display: flex; gap: 6px; margin-bottom: 8px;">
+      <button class="btn btn-primary" onclick="sendDecision('accept')" style="flex: 1; height: 28px; font-size: 11px;">Approve</button>
+      <button class="btn btn-secondary" onclick="showEditPanel()" style="flex: 1; height: 28px; font-size: 11px;">Edit Text</button>
+      <button id="btn-cancel" class="btn btn-secondary btn-danger" onclick="cancelAgent()" style="flex: 1; height: 28px; font-size: 11px;">Cancel Run</button>
+    </div>
+
+    <!-- Chat Input Box -->
+    <div id="chat-input-bar" style="display: flex; gap: 6px; align-items: flex-end;">
+      <textarea id="goal-input" class="text-input-field" placeholder="Type a goal (or feedback to the agent) here..." style="height: 40px; border-radius: 18px; line-height: 1.4; padding-top: 10px;"></textarea>
+      <button id="btn-send" class="btn btn-primary" onclick="onSendButton()" title="Send (⌘/Ctrl + Enter)" style="height: 40px; border-radius: 18px; padding: 0 12px; display: flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; background: var(--primary-color); border: none; box-shadow: 0 1px 3px rgba(60,64,67,0.3); color: #fff; font-size: 11px; font-weight: 600; line-height: 1; white-space: nowrap;">
+        <!-- Send mode: paper airplane + shortcut hint -->
+        <span id="send-mode" style="display: flex; align-items: center; gap: 6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="#fff" viewBox="0 0 16 16">
+            <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.26.41a.5.5 0 0 0 .887-.082l.18-.452L15.964.686ZM6.3 10.045L4.773 6.947 14.155 1.5 6.3 10.045Zm2.79 1.5L6.012 9.3 14.5 1.5 9.09 11.545Z"/>
+          </svg>
+          <span>⌘ Enter</span>
+        </span>
+        <!-- Stop mode: spinner + Stop (shown while a run is in progress) -->
+        <span id="stop-mode" style="display: none; align-items: center; gap: 6px;">
+          <svg width="13" height="13" viewBox="0 0 50 50" fill="none" style="flex-shrink:0;">
+            <circle cx="25" cy="25" r="20" stroke="#fff" stroke-opacity="0.35" stroke-width="6"/>
+            <path d="M25 5 a20 20 0 0 1 20 20" stroke="#fff" stroke-width="6" stroke-linecap="round">
+              <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/>
+            </path>
+          </svg>
+          <span>Stop</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- Additional Small Buttons/Options -->
+    <div style="margin-top: 8px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; gap: 4px;">
+        <button id="btn-link-google" class="btn btn-secondary" onclick="generateGoogleLinks()" style="font-size: 10px; padding: 4px 10px; height: 24px; border-radius: 4px; line-height: 1;">Link Google Tech</button>
+        <button id="btn-clear-chat" class="btn btn-secondary" onclick="clearChatHistory()" style="font-size: 10px; padding: 4px 10px; height: 24px; border-radius: 4px; line-height: 1; border: 1px solid #dadce0; background: transparent; color: var(--text-muted);">Clear Chat</button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div id="status-badge" class="badge badge-idle" style="margin-top: 0; padding: 2px 6px; font-size: 9px; line-height: 1;">Ready</div>
+        
+        <input type="checkbox" id="goal-mode-toggle" checked style="width: 13px; height: 13px; accent-color: var(--primary-color); cursor: pointer; margin: 0;">
+        <label for="goal-mode-toggle" style="font-size: 11px; opacity: 0.9; cursor: pointer; user-select: none; color: var(--text-muted); font-weight: 500; margin-right: 4px;">Goal Mode</label>
+
+        <input type="checkbox" id="auto-approve-toggle" style="width: 13px; height: 13px; accent-color: var(--primary-color); cursor: pointer; margin: 0;">
+        <label for="auto-approve-toggle" style="font-size: 11px; opacity: 0.9; cursor: pointer; user-select: none; color: var(--text-muted); font-weight: 500;">Auto-Approve</label>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const BACKEND_URL = "http://localhost:8123";
+    let activeDocId = null;
+    let pollInterval = null;
+    let isEditing = false;
+    let cachedNewText = "";
+    let lastLogHash = "";
+    let isThoughtsCollapsed = false;
+
+    // Automatically retrieve document ID from Apps Script when opened
+    window.onload = function() {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(id) {
+            activeDocId = id;
+            document.getElementById("status-doc-id").textContent = id;
+            document.getElementById("current-doc-info").classList.remove("hidden");
+            startPolling();
+          })
+          .withFailureHandler(function(err) {
+            console.error("Failed to retrieve document ID", err);
+            document.getElementById("status-doc-id").textContent = "(no document — reopen the sidebar from a Google Doc)";
+            startPolling();
+          })
+          .getActiveDocId();
+      } else {
+        // Opened outside Google Docs (e.g. directly in a browser): no document available.
+        document.getElementById("status-doc-id").textContent = "(no document — open via the Google Docs sidebar)";
+        document.getElementById("current-doc-info").classList.remove("hidden");
+        startPolling();
+      }
+
+      // Add keyboard shortcut for Cmd/Ctrl+Enter submission (runs in all environments)
+      const goalInput = document.getElementById("goal-input");
+      if (goalInput) {
+        goalInput.addEventListener("keydown", function(event) {
+          if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+            event.preventDefault();
+            handleSend();
+          }
+        });
+
+        // Auto-grow text box height depending on user input content length
+        goalInput.addEventListener("input", function() {
+          this.style.height = "auto";
+          const newHeight = Math.min(this.scrollHeight, 120);
+          this.style.height = newHeight + "px";
+          this.style.overflowY = this.scrollHeight > 120 ? "auto" : "hidden";
+        });
+      }
+
+      // Add event listener for auto-approve toggle to trigger immediately on check on-the-fly
+      const autoApproveToggle = document.getElementById("auto-approve-toggle");
+      if (autoApproveToggle) {
+        autoApproveToggle.addEventListener("change", function() {
+          if (this.checked && document.getElementById("status-badge").textContent === "waiting_approval") {
+            sendDecision("accept");
+          }
+        });
+      }
+    };
+
+    function startPolling() {
+      if (pollInterval) clearInterval(pollInterval);
+      checkStatus();
+      pollInterval = setInterval(checkStatus, 1000);
+    }
+
+    async function checkStatus() {
+      try {
+        const response = await fetch(BACKEND_URL + "/api/status");
+        if (!response.ok) throw new Error("Status check failed");
+        const data = await response.json();
+        
+        document.getElementById("connection-error").classList.add("hidden");
+        updateUIState(data);
+      } catch (err) {
+        document.getElementById("connection-error").classList.remove("hidden");
+        const badge = document.getElementById("status-badge");
+        badge.textContent = "Offline";
+        badge.className = "badge badge-failed";
+      }
+    }
+
+    function updateUIState(data) {
+      const badge = document.getElementById("status-badge");
+      const status = data.status;
+      const logs = data.logs || [];
+      const pending = data.pendingApproval;
+      
+      // Update badge class
+      badge.textContent = status === "waiting_approval" ? "Review Needed" : status;
+      badge.className = "badge badge-" + status;
+
+      // Track status so the send/stop button knows what a click should do.
+      currentRunStatus = status;
+
+      // Update input placeholder and the send/stop button based on state.
+      const goalInput = document.getElementById("goal-input");
+      const btnSend = document.getElementById("btn-send");
+      const sendMode = document.getElementById("send-mode");
+      const stopMode = document.getElementById("stop-mode");
+      if (status === "running") {
+        // Turn the send button into a spinner + Stop (click to cancel the run).
+        goalInput.disabled = true;
+        goalInput.placeholder = "Agent is thinking...";
+        btnSend.disabled = false;
+        btnSend.style.opacity = "1";
+        btnSend.style.background = "var(--danger-color, #d93025)";
+        btnSend.title = "Stop the running agent";
+        sendMode.style.display = "none";
+        stopMode.style.display = "flex";
+      } else {
+        goalInput.disabled = false;
+        btnSend.disabled = false;
+        btnSend.style.opacity = "1";
+        btnSend.style.background = "var(--primary-color)";
+        btnSend.title = "Send (⌘/Ctrl + Enter)";
+        sendMode.style.display = "flex";
+        stopMode.style.display = "none";
+
+        if (status === "waiting_approval") {
+          goalInput.placeholder = "Type changes or feedback for the agent...";
+        } else {
+          goalInput.placeholder = "Type a goal for the agent here...";
+        }
+      }
+
+      // Render conversation in chat UI
+      updateChat(status, logs, data.goal, pending, data.approvalHistory || []);
+    }
+
+    // Refresh conversational chat window
+    function updateChat(status, logs, goal, pending, history) {
+      const historyStr = (history || []).map(h => h.summary + ":" + h.decision).join(",");
+      const currentHash = logs.join("\n") + "|" + status + "|" + (pending ? pending.summary : "") + "|" + historyStr;
+      if (currentHash === lastLogHash) return;
+      lastLogHash = currentHash;
+
+      const chatContainer = document.getElementById("chat-container");
+      const wasAtBottom = chatContainer.scrollHeight - chatContainer.clientHeight - chatContainer.scrollTop < 50;
+      const oldScrollTop = chatContainer.scrollTop;
+      
+      chatContainer.innerHTML = "";
+
+      let currentThoughts = "";
+      let historyIndex = 0;
+      
+      logs.forEach(log => {
+        if (log.startsWith("[Auth Info]") || log.startsWith("--- Turn ")) {
+          return;
+        }
+        // If there were active thoughts and this log is NOT a thought, flush the thoughts block!
+        if (!log.startsWith("[Thought] ") && currentThoughts) {
+          createThoughtsBlock(currentThoughts, false);
+          currentThoughts = "";
+        }
+
+        if (log.startsWith("[User Goal] ")) {
+          createChatBubble("user", log.substring("[User Goal] ".length));
+        } else if (log.startsWith("[Thought] ")) {
+          currentThoughts += log.substring("[Thought] ".length);
+        } else if (log.startsWith("[Agent Response]:\n")) {
+          const content = log.substring("[Agent Response]:\n".length);
+          createChatBubble("agent", content);
+        } else if (log.startsWith("[Change] ")) {
+          // Auto-approve mode: one compact line per applied change.
+          createSystemMessage("✓ " + log.substring("[Change] ".length));
+        } else if (log.startsWith("[Approval Gate] User APPROVED")) {
+          createChatBubble("user", "Approved proposed changes.");
+        } else if (log.startsWith("[Approval Gate] User REJECTED with feedback: ")) {
+          const feedback = log.substring("[Approval Gate] User REJECTED with feedback: ".length);
+          createChatBubble("user", 'Revisions requested: "' + feedback + '"');
+        } else if (log.startsWith("[Approval Gate] User EDITED")) {
+          createChatBubble("user", "Submitted manual edits.");
+        } else if (log.startsWith("[Approval Gate] Intercepted edits: ")) {
+          const summary = log.substring("[Approval Gate] Intercepted edits: ".length).trim();
+          let found = null;
+          for (let i = historyIndex; i < history.length; i++) {
+            if (history[i].summary.trim() === summary) {
+              found = history[i];
+              historyIndex = i + 1;
+              break;
+            }
+          }
+          if (found) {
+            createDiffBubble(found, found.decision);
+          } else {
+            createSystemMessage(log);
+          }
+        } else if (log.startsWith("--- Turn ") || log.startsWith("[Auth Info]") || log.startsWith("Success:") || log.startsWith("Failed:") || log.startsWith("Finished:")) {
+          createSystemMessage(log);
+        } else {
+          // Fallback for standard log notices
+          createSystemMessage(log);
+        }
+      });
+
+      // Flush any remaining thoughts at the end
+      if (currentThoughts) {
+        createThoughtsBlock(currentThoughts, status === "running");
+      }
+
+      // 3. Render pending approval inside the chat flow
+      const approvalControls = document.getElementById("approval-controls");
+      if (status === "waiting_approval" && pending) {
+        // Auto-approve intercept
+        const autoApprove = document.getElementById("auto-approve-toggle").checked;
+        if (autoApprove) {
+          sendDecision("accept");
+          return;
+        }
+
+        createDiffBubble(pending);
+        approvalControls.classList.remove("hidden");
+        
+        if (cachedNewText !== pending.new_text) {
+          cachedNewText = pending.new_text;
+          document.getElementById("edit-textarea").value = pending.new_text;
+        }
+      } else {
+        approvalControls.classList.add("hidden");
+      }
+
+      // Restore scroll position or scroll to bottom if they were at the bottom
+      if (wasAtBottom) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      } else {
+        chatContainer.scrollTop = oldScrollTop;
+      }
+    }
+
+    function createChatBubble(sender, content) {
+      if (!content.trim()) return;
+      const chatContainer = document.getElementById("chat-container");
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble chat-bubble-" + sender;
+      if (typeof marked !== 'undefined') {
+        bubble.innerHTML = marked.parse(content);
+      } else {
+        bubble.textContent = content;
+        bubble.style.whiteSpace = "pre-wrap";
+      }
+      chatContainer.appendChild(bubble);
+    }
+
+    function createThoughtsBlock(thoughtsText, shouldScrollToBottom = false) {
+      if (!thoughtsText.trim()) return;
+      const chatContainer = document.getElementById("chat-container");
+      
+      const details = document.createElement("details");
+      details.className = "thought-details";
+      details.open = !isThoughtsCollapsed;
+      
+      details.addEventListener('toggle', () => {
+        isThoughtsCollapsed = !details.open;
+      });
+      
+      const summary = document.createElement("summary");
+      summary.textContent = "Show thinking process";
+      details.appendChild(summary);
+      
+      const content = document.createElement("div");
+      content.className = "thought-content";
+      if (typeof marked !== 'undefined') {
+        content.innerHTML = marked.parse(thoughtsText);
+      } else {
+        content.textContent = thoughtsText;
+      }
+      details.appendChild(content);
+      
+      chatContainer.appendChild(details);
+      
+      if (shouldScrollToBottom && !isThoughtsCollapsed) {
+        setTimeout(() => {
+          content.scrollTop = content.scrollHeight;
+        }, 50);
+      }
+    }
+
+    function createSystemMessage(content) {
+      if (!content.trim()) return;
+      const chatContainer = document.getElementById("chat-container");
+      const msg = document.createElement("div");
+      msg.className = "system-msg";
+      msg.textContent = content;
+      chatContainer.appendChild(msg);
+    }
+
+    function createDiffBubble(pending, decision = null) {
+      const chatContainer = document.getElementById("chat-container");
+      
+      const bubble = document.createElement("div");
+      bubble.className = "diff-bubble";
+      
+      const title = document.createElement("div");
+      title.className = "diff-title";
+      title.textContent = "Proposed Changes: " + pending.summary;
+      bubble.appendChild(title);
+      
+      const diffContainer = document.createElement("div");
+      diffContainer.className = "diff-container";
+
+      if (pending.diff && pending.diff.trim()) {
+        const diffLines = pending.diff.split("\n");
+        diffLines.forEach(lineText => {
+          const line = document.createElement("span");
+          line.className = "diff-line";
+          if (lineText.startsWith("+")) {
+            line.classList.add("diff-add");
+          } else if (lineText.startsWith("-")) {
+            line.classList.add("diff-del");
+          } else if (lineText.startsWith("@")) {
+            line.classList.add("diff-info");
+          }
+          line.textContent = lineText;
+          diffContainer.appendChild(line);
+        });
+      } else {
+        // Styling-only edit (e.g. adding/removing a hyperlink): no text diff to show.
+        const note = document.createElement("div");
+        note.style.fontStyle = "italic";
+        note.style.fontSize = "11px";
+        note.style.color = "var(--text-muted)";
+        note.style.padding = "2px 0";
+        note.textContent = "Formatting change only — the document text is unchanged.";
+        diffContainer.appendChild(note);
+      }
+
+      bubble.appendChild(diffContainer);
+      
+      if (decision) {
+        const statusText = document.createElement("div");
+        statusText.style.fontWeight = "500";
+        statusText.style.fontSize = "11px";
+        statusText.style.marginTop = "6px";
+        statusText.style.display = "flex";
+        statusText.style.alignItems = "center";
+        statusText.style.gap = "4px";
+        
+        if (decision === "accept") {
+          statusText.style.color = "var(--success-text)";
+          statusText.innerHTML = "<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='currentColor' viewBox='0 0 16 16'><path d='M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z'/></svg> Approved";
+        } else if (decision === "reject") {
+          statusText.style.color = "var(--danger-text)";
+          statusText.innerHTML = "<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='currentColor' viewBox='0 0 16 16'><path d='M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z'/></svg> Rejected";
+        } else if (decision === "edit") {
+          statusText.style.color = "var(--warning-text)";
+          statusText.innerHTML = "<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='currentColor' viewBox='0 0 16 16'><path d='M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z'/></svg> Manually Edited";
+        }
+        bubble.appendChild(statusText);
+      }
+      
+      chatContainer.appendChild(bubble);
+    }
+
+    // Command Actions
+    async function handleSend() {
+      const input = document.getElementById("goal-input");
+      const text = input.value.trim();
+      if (!text) return;
+      
+      input.value = "";
+      input.style.height = "40px";
+      input.style.overflowY = "hidden";
+      
+      const statusBadge = document.getElementById("status-badge").textContent;
+      
+      if (statusBadge === "Review Needed") {
+        // If waiting for approval, treat sending a message as a rejection feedback comment
+        try {
+          const response = await fetch(BACKEND_URL + "/api/approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ decision: "reject", editedText: text })
+          });
+          if (!response.ok) throw new Error("Feedback submission failed");
+          document.getElementById("edit-panel").classList.add("hidden");
+          isEditing = false;
+        } catch (err) {
+          alert("Error sending feedback: " + err.message);
+        }
+      } else if (statusBadge !== "running") {
+        // If idle, treat sending a message as starting a new agent run
+        try {
+          const response = await fetch(BACKEND_URL + "/api/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              docId: activeDocId,
+              goal: text,
+              useGoalMode: document.getElementById("goal-mode-toggle").checked,
+              autoApprove: document.getElementById("auto-approve-toggle").checked
+            })
+          });
+          if (!response.ok) {
+            const detail = await response.json();
+            throw new Error(detail.detail || "Launch failed");
+          }
+          lastLogHash = "";
+        } catch (err) {
+          alert("Error starting agent: " + err.message);
+        }
+      }
+    }
+
+    async function startAgent() {
+      const goal = document.getElementById("goal-input").value.trim();
+      if (!goal) return;
+      
+      try {
+        const response = await fetch(BACKEND_URL + "/api/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            docId: activeDocId,
+            goal: goal,
+            useGoalMode: document.getElementById("goal-mode-toggle").checked,
+            autoApprove: document.getElementById("auto-approve-toggle").checked
+          })
+        });
+        if (!response.ok) {
+          const detail = await response.json();
+          throw new Error(detail.detail || "Launch failed");
+        }
+        lastLogHash = "";
+      } catch (err) {
+        alert("Error starting agent: " + err.message);
+      }
+    }
+
+    function generateGoogleLinks() {
+      // Prefill the goal but do NOT submit — let the user review/edit, then send.
+      const goalInput = document.getElementById("goal-input");
+      goalInput.value = "Go through the whole document, find every Google technology I mention, and link each one to its official docs.";
+      goalInput.style.height = "auto";
+      const newHeight = Math.min(goalInput.scrollHeight, 120);
+      goalInput.style.height = newHeight + "px";
+      goalInput.style.overflowY = goalInput.scrollHeight > 120 ? "auto" : "hidden";
+      goalInput.focus();
+    }
+
+    async function clearChatHistory() {
+      if (!confirm("Are you sure you want to clear the entire chat history?")) return;
+      try {
+        const response = await fetch(BACKEND_URL + "/api/clear", {
+          method: "POST"
+        });
+        if (!response.ok) throw new Error("Failed to clear chat history");
+        
+        // Wipe local UI state
+        document.getElementById("chat-container").innerHTML = "";
+        lastLogHash = "";
+        
+        const goalInput = document.getElementById("goal-input");
+        goalInput.value = "";
+        goalInput.style.height = "40px";
+        goalInput.style.overflowY = "hidden";
+        
+        // Immediately refresh the view
+        checkStatus();
+      } catch (err) {
+        alert("Error clearing history: " + err.message);
+      }
+    }
+
+    async function sendDecision(decision) {
+      try {
+        const response = await fetch(BACKEND_URL + "/api/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision: decision })
+        });
+        if (!response.ok) throw new Error("Approval request failed");
+        document.getElementById("edit-panel").classList.add("hidden");
+        isEditing = false;
+      } catch (err) {
+        alert("Error sending decision: " + err.message);
+      }
+    }
+
+    async function submitEdit() {
+      const text = document.getElementById("edit-textarea").value;
+      try {
+        const response = await fetch(BACKEND_URL + "/api/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision: "edit", editedText: text })
+        });
+        if (!response.ok) throw new Error("Edit request failed");
+        document.getElementById("edit-panel").classList.add("hidden");
+        isEditing = false;
+      } catch (err) {
+        alert("Error submitting edit: " + err.message);
+      }
+    }
+
+    // Tracks the latest run status so the send/stop button dispatches correctly.
+    let currentRunStatus = "idle";
+
+    // The send button doubles as a Stop button while a run is in progress.
+    function onSendButton() {
+      if (currentRunStatus === "running") {
+        cancelAgent();
+      } else {
+        handleSend();
+      }
+    }
+
+    async function cancelAgent() {
+      try {
+        await fetch(BACKEND_URL + "/api/cancel", { method: "POST" });
+      } catch (err) {
+        console.error("Error cancelling run", err);
+      }
+    }
+
+    // Toggle manual inline edit panel
+    function showEditPanel() {
+      document.getElementById("edit-panel").classList.remove("hidden");
+      isEditing = true;
+    }
+
+    // Hide edit panel
+    function hideEditPanel() {
+      document.getElementById("edit-panel").classList.add("hidden");
+      isEditing = false;
+    }
+  </script>
+</body>
+</html>

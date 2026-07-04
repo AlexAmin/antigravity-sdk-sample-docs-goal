@@ -1,0 +1,14 @@
+[project]
+name = "docs-goal-agent"
+version = "0.1.0"
+description = "Goal-driven Google Docs editing agent with a sidebar approval UI, built on the Google Antigravity SDK"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "google-antigravity>=0.1.5",
+    "google-api-python-client>=2.198.0",
+    "google-auth>=2.55.1",
+    "python-dotenv>=1.2.2",
+    "fastapi>=0.111.0",
+    "uvicorn>=0.30.0",
+]

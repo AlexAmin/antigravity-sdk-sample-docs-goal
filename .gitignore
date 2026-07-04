@@ -1,0 +1,39 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+*.pem
+
+.DS_Store
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# IDEs
+.idea/
+.jbeval/
+
+# Python env
+.venv/
+
+# clasp binding (personal Apps Script project ID)
+.clasp.json
+!.clasp.json.example
+
+
+
+# Symlink to AGENTS.md
+GEMINI.md
+CLAUDE.md
+
+# runtime / scratch
+audit.log
+mock_doc.txt
+sample-doc*.txt
